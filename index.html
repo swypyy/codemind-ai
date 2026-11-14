@@ -6,6 +6,21 @@
 <meta name="theme-color" content="#090810">
 <title>CodeMind AI | Swypyy</title>
 
+<!-- Markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<!-- HTML sanitization -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+
+<!-- Code highlighting -->
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/css.min.js"></script>
+
 <style>
 :root {
   --bg: #090810;
@@ -19,9 +34,7 @@
   --muted: #9690aa;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -32,15 +45,8 @@ body {
   font-family: Arial, sans-serif;
 }
 
-button, textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-/* APP LAYOUT */
+button, textarea { font: inherit; }
+button { cursor: pointer; }
 
 .app {
   display: flex;
@@ -51,22 +57,22 @@ button {
 /* SIDEBAR */
 
 .sidebar {
-  width: 260px;
-  min-width: 260px;
+  width: 265px;
+  min-width: 265px;
   background: var(--sidebar);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 17px 13px;
-  transition: transform .25s ease;
   z-index: 20;
+  transition: transform .25s;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 5px 7px 22px;
+  padding: 5px 7px 23px;
 }
 
 .logo {
@@ -105,54 +111,86 @@ button {
   display: flex;
   gap: 10px;
   align-items: center;
-  transition: .2s;
 }
 
-.new-chat:hover {
+.new-chat:hover,
+.history-item:hover {
   background: var(--surface2);
-  border-color: var(--light);
 }
 
-.sidebar-section {
-  margin: 27px 8px 10px;
+.section-label {
+  margin: 25px 8px 10px;
   color: var(--muted);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
-.sidebar-info {
-  color: var(--muted);
+.history-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 9px;
+  color: #c9c3d8;
   font-size: 12px;
-  line-height: 1.7;
-  padding: 0 8px;
+  cursor: pointer;
+  margin-bottom: 3px;
+}
+
+.history-item.active {
+  background: #241b38;
+  color: white;
+}
+
+.history-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.delete-chat {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 3px 5px;
+  font-size: 15px;
+  opacity: 0;
+}
+
+.history-item:hover .delete-chat {
+  opacity: 1;
 }
 
 .sidebar-bottom {
-  margin-top: auto;
   border-top: 1px solid var(--border);
   padding: 15px 8px 2px;
   color: var(--muted);
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-.sidebar-bottom strong {
-  color: var(--light);
-}
+.sidebar-bottom strong { color: var(--light); }
 
-/* MAIN AREA */
+/* MAIN */
 
 .main {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  position: relative;
 }
 
 .topbar {
-  height: 62px;
+  height: 58px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -172,8 +210,7 @@ button {
   background: transparent;
   border: 0;
   color: var(--text);
-  font-size: 22px;
-  padding: 5px;
+  font-size: 21px;
 }
 
 .model-name {
@@ -181,18 +218,12 @@ button {
   font-weight: bold;
 }
 
-.model-tag {
-  color: var(--light);
-  font-size: 11px;
-  margin-left: 7px;
-}
-
-.connection {
+.save-status {
   color: #8de0a5;
   font-size: 11px;
 }
 
-/* CHAT CONTENT */
+/* CHAT AREA */
 
 .chat-area {
   flex: 1;
@@ -202,11 +233,11 @@ button {
 }
 
 .chat-inner {
-  max-width: 820px;
   width: 100%;
+  max-width: 850px;
   min-height: 100%;
   margin: auto;
-  padding: 30px 25px 35px;
+  padding: 30px 25px;
 }
 
 .welcome {
@@ -224,37 +255,33 @@ button {
   border-radius: 17px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #24183d, #39235d);
+  background: linear-gradient(135deg,#24183d,#39235d);
   color: #c4a8ff;
   font-size: 23px;
   margin-bottom: 22px;
 }
 
 .welcome h1 {
-  font-size: clamp(25px, 4vw, 36px);
+  font-size: clamp(25px,4vw,36px);
   margin: 0 0 12px;
-  letter-spacing: -1px;
 }
 
-.welcome h1 span {
-  color: var(--light);
-}
+.welcome h1 span { color: var(--light); }
 
 .welcome p {
   max-width: 430px;
   color: var(--muted);
   line-height: 1.7;
   font-size: 14px;
-  margin: 0;
 }
 
 .suggestions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2,1fr);
   gap: 10px;
   width: 100%;
   max-width: 570px;
-  margin-top: 32px;
+  margin-top: 25px;
 }
 
 .suggestion {
@@ -264,7 +291,6 @@ button {
   background: var(--surface);
   border-radius: 12px;
   color: var(--text);
-  transition: .2s;
 }
 
 .suggestion:hover {
@@ -287,56 +313,139 @@ button {
 
 .message {
   display: flex;
-  gap: 13px;
-  margin: 0 auto 27px;
-  max-width: 100%;
-  line-height: 1.75;
+  width: 100%;
+  margin-bottom: 27px;
+  animation: appear .2s ease;
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.user-bubble {
+  max-width: 78%;
+  padding: 12px 17px;
+  border-radius: 17px 17px 4px 17px;
+  background: #30234b;
+  color: #f1eaff;
   font-size: 14px;
-}
-
-.avatar {
-  width: 31px;
-  height: 31px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: #251a40;
-  color: var(--light);
-  font-size: 11px;
-  font-weight: bold;
-}
-
-.user .avatar {
-  background: #34264e;
-  color: #e5d9ff;
-}
-
-.message-content {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.message-label {
-  font-size: 11px;
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: var(--light);
-}
-
-.user .message-label {
-  color: #c4b5fd;
-}
-
-.message-text {
+  line-height: 1.7;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+.message.bot {
+  justify-content: flex-start;
+}
+
+.bot-content {
+  width: 100%;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.bot-content p { margin: 0 0 15px; }
+.bot-content h1,
+.bot-content h2,
+.bot-content h3 {
+  margin: 23px 0 10px;
+  line-height: 1.4;
+}
+
+.bot-content h1 { font-size: 22px; }
+.bot-content h2 { font-size: 19px; }
+.bot-content h3 { font-size: 16px; }
+
+.bot-content ul,
+.bot-content ol {
+  padding-left: 25px;
+  margin: 10px 0 18px;
+}
+
+.bot-content li { margin: 5px 0; }
+
+.bot-content blockquote {
+  border-left: 3px solid var(--purple);
+  margin: 15px 0;
+  padding: 5px 15px;
+  color: #c5bdd6;
+  background: #151221;
+}
+
+.bot-content a {
+  color: var(--light);
+}
+
+.bot-content table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.bot-content th,
+.bot-content td {
+  border: 1px solid var(--border);
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.bot-content th { background: var(--surface2); }
+
+.bot-content code:not(pre code) {
+  background: #211a31;
+  color: #d6c5ff;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: .9em;
+}
+
+.bot-content pre {
+  position: relative;
+  background: #100e18;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 16px 0;
+  overflow: auto;
+  max-width: 100%;
+}
+
+.bot-content pre code {
+  display: block;
+  padding: 19px;
+  padding-top: 43px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+.copy-code {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #29213a;
+  color: #d9ccf5;
+  border: 1px solid #403653;
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11px;
+  z-index: 2;
+}
+
+.copy-code:hover { background: #403052; }
+
 .typing {
   color: var(--muted);
   font-size: 13px;
+  padding: 8px 0;
 }
 
 /* COMPOSER */
@@ -344,11 +453,11 @@ button {
 .composer-area {
   flex-shrink: 0;
   padding: 12px 20px 17px;
-  background: linear-gradient(transparent, var(--bg) 18%);
+  background: linear-gradient(transparent,var(--bg) 18%);
 }
 
 .composer-wrap {
-  max-width: 820px;
+  max-width: 850px;
   margin: auto;
 }
 
@@ -360,20 +469,17 @@ button {
   background: var(--surface);
   border: 1px solid #39314f;
   border-radius: 17px;
-  transition: border .2s;
 }
 
-.composer:focus-within {
-  border-color: var(--light);
-}
+.composer:focus-within { border-color: var(--light); }
 
 textarea {
   flex: 1;
   min-width: 0;
   max-height: 180px;
   resize: none;
-  border: none;
-  outline: none;
+  border: 0;
+  outline: 0;
   background: transparent;
   color: var(--text);
   padding: 7px 0;
@@ -381,9 +487,7 @@ textarea {
   line-height: 1.5;
 }
 
-textarea::placeholder {
-  color: #777087;
-}
+textarea::placeholder { color: #777087; }
 
 .send-button {
   width: 39px;
@@ -393,12 +497,7 @@ textarea::placeholder {
   border-radius: 11px;
   background: var(--purple);
   color: white;
-  font-size: 19px;
-  transition: .2s;
-}
-
-.send-button:hover {
-  background: #9563f5;
+  font-size: 20px;
 }
 
 .send-button:disabled {
@@ -415,11 +514,9 @@ textarea::placeholder {
 
 /* MOBILE */
 
-.overlay {
-  display: none;
-}
+.overlay { display: none; }
 
-@media(max-width: 700px) {
+@media(max-width:700px) {
   .sidebar {
     position: fixed;
     top: 0;
@@ -429,9 +526,7 @@ textarea::placeholder {
     transform: translateX(-100%);
   }
 
-  .sidebar.open {
-    transform: translateX(0);
-  }
+  .sidebar.open { transform: translateX(0); }
 
   .overlay.show {
     display: block;
@@ -441,250 +536,372 @@ textarea::placeholder {
     z-index: 10;
   }
 
-  .menu-button {
-    display: block;
-  }
+  .menu-button { display: block; }
 
   .topbar {
-    height: 56px;
+    height: 55px;
     padding: 0 13px;
   }
 
-  .chat-inner {
-    padding: 23px 15px;
-  }
-
-  .welcome {
-    min-height: 60vh;
-  }
-
-  .suggestions {
-    grid-template-columns: 1fr;
-    margin-top: 25px;
-  }
-
-  .composer-area {
-    padding: 9px 10px 12px;
-  }
-
-  .message {
-    gap: 10px;
-    font-size: 13px;
-  }
-
-  .connection {
-    font-size: 10px;
-  }
-}
-
-@media(max-width: 360px) {
-  .model-tag {
-    display: none;
-  }
+  .chat-inner { padding: 22px 15px; }
+  .welcome { min-height: 60vh; }
+  .suggestions { grid-template-columns: 1fr; }
+  .composer-area { padding: 9px 10px 12px; }
+  .user-bubble { max-width: 90%; }
+  .bot-content { font-size: 13px; }
+  .bot-content pre code { font-size: 12px; }
+  .delete-chat { opacity: 1; }
 }
 </style>
 </head>
 
 <body>
-
 <div class="app">
 
-  <div class="overlay" id="overlay"></div>
+<div class="overlay" id="overlay"></div>
 
-  <aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar">
 
-    <div class="brand">
-      <div class="logo">&lt;/&gt;</div>
-      <div class="brand-name">
-        CodeMind AI
-        <small>POWERED BY SWYPYY</small>
-      </div>
+  <div class="brand">
+    <div class="logo">&lt;/&gt;</div>
+    <div class="brand-name">
+      CodeMind AI
+      <small>POWERED BY SWYPYY</small>
     </div>
+  </div>
 
-    <button class="new-chat" id="newChat">
-      <span>＋</span>
-      <span>New chat</span>
-    </button>
+  <button class="new-chat" id="newChat">
+    <span>＋</span> New chat
+  </button>
 
-    <div class="sidebar-section">Workspace</div>
+  <div class="section-label">Your chats</div>
+  <div class="history-list" id="historyList"></div>
 
-    <div class="sidebar-info">
-      Your programming assistant.<br><br>
-      Generate code, debug errors,
-      understand concepts and build
-      software projects.
+  <div class="sidebar-bottom">
+    <strong>CodeMind AI</strong><br>
+    Your personal coding assistant.
+  </div>
+
+</aside>
+
+<main class="main">
+
+  <header class="topbar">
+    <div class="top-left">
+      <button class="menu-button" id="menuButton">☰</button>
+      <div class="model-name">CodeMind AI</div>
     </div>
+    <div class="save-status" id="saveStatus">● Saved locally</div>
+  </header>
 
-    <div class="sidebar-bottom">
-      <strong>CodeMind AI 2.1</strong><br>
-      Powered by Swypyy<br>
-      Cloudflare Workers AI
-    </div>
+  <section class="chat-area" id="chatArea">
+    <div class="chat-inner" id="chatInner">
 
-  </aside>
+      <div class="welcome" id="welcome">
+        <div class="welcome-logo">&lt;/&gt;</div>
 
-  <main class="main">
+        <h1>What are we <span>building?</span></h1>
 
-    <header class="topbar">
+        <p>
+          Your programming companion for coding,
+          debugging and software development.
+        </p>
 
-      <div class="top-left">
-        <button class="menu-button" id="menuButton">☰</button>
-        <div>
-          <span class="model-name">CodeMind</span>
-          <span class="model-tag">AI</span>
+        <div class="suggestions">
+          <button class="suggestion"
+            data-prompt="Explain Python variables with examples.">
+            <strong>Learn programming</strong>
+            <span>Understand coding concepts</span>
+          </button>
+
+          <button class="suggestion"
+            data-prompt="Help me debug my JavaScript code.">
+            <strong>Debug code</strong>
+            <span>Find and fix programming errors</span>
+          </button>
+
+          <button class="suggestion"
+            data-prompt="Create a simple responsive HTML website.">
+            <strong>Build a website</strong>
+            <span>Start a coding project</span>
+          </button>
+
+          <button class="suggestion"
+            data-prompt="Explain how APIs work with an example.">
+            <strong>Understand APIs</strong>
+            <span>Learn how software connects</span>
+          </button>
         </div>
       </div>
 
-      <div class="connection" id="connection">
-        ● AI connected
+    </div>
+  </section>
+
+  <section class="composer-area">
+    <div class="composer-wrap">
+      <form class="composer" id="chatForm">
+
+        <textarea id="userInput"
+          rows="1"
+          placeholder="Message CodeMind AI..."
+          autocomplete="off"
+          required></textarea>
+
+        <button class="send-button"
+          id="sendButton"
+          type="submit">↑</button>
+
+      </form>
+
+      <div class="composer-note">
+        AI can make mistakes. Review generated code before using it.
       </div>
+    </div>
+  </section>
 
-    </header>
-
-    <section class="chat-area" id="chatArea">
-      <div class="chat-inner" id="chatInner">
-
-        <div class="welcome" id="welcome">
-
-          <div class="welcome-logo">&lt;/&gt;</div>
-
-          <h1>What are we <span>building?</span></h1>
-
-          <p>
-            Your coding companion for programming,
-            debugging and software development.
-          </p>
-
-          <div class="suggestions">
-
-            <button class="suggestion"
-              data-prompt="Explain Python variables with examples.">
-              <strong>Learn programming</strong>
-              <span>Understand coding concepts</span>
-            </button>
-
-            <button class="suggestion"
-              data-prompt="Help me debug my JavaScript code.">
-              <strong>Debug code</strong>
-              <span>Find and fix programming errors</span>
-            </button>
-
-            <button class="suggestion"
-              data-prompt="Create a simple responsive HTML website.">
-              <strong>Build a website</strong>
-              <span>Start a new coding project</span>
-            </button>
-
-            <button class="suggestion"
-              data-prompt="Explain how APIs work with a simple example.">
-              <strong>Understand APIs</strong>
-              <span>Learn how software connects</span>
-            </button>
-
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <section class="composer-area">
-
-      <div class="composer-wrap">
-
-        <form class="composer" id="chatForm">
-
-          <textarea
-            id="userInput"
-            rows="1"
-            placeholder="Message CodeMind AI..."
-            autocomplete="off"
-            required
-          ></textarea>
-
-          <button
-            class="send-button"
-            id="sendButton"
-            type="submit"
-            aria-label="Send message"
-          >↑</button>
-
-        </form>
-
-        <div class="composer-note">
-          CodeMind AI can make mistakes. Review generated code before using it.
-        </div>
-
-      </div>
-
-    </section>
-
-  </main>
-
+</main>
 </div>
 
 <script>
+/* CONFIGURATION */
+
 const API_URL = "https://codemind-ai-api.swypyy.workers.dev";
+const STORAGE_KEY = "codemind_saved_chats_v1";
+
+/* ELEMENTS */
 
 const form = document.getElementById("chatForm");
 const input = document.getElementById("userInput");
 const sendButton = document.getElementById("sendButton");
 const chatInner = document.getElementById("chatInner");
 const chatArea = document.getElementById("chatArea");
-const welcome = document.getElementById("welcome");
-const connection = document.getElementById("connection");
-
+const historyList = document.getElementById("historyList");
+const saveStatus = document.getElementById("saveStatus");
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 
-let conversation = [];
+/* STATE */
+
+let chats = loadChats();
+let activeChatId = null;
 let isSending = false;
 
-function closeSidebar() {
-  sidebar.classList.remove("open");
-  overlay.classList.remove("show");
+function makeId() {
+  return Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 8);
 }
 
-document.getElementById("menuButton").addEventListener("click", () => {
-  sidebar.classList.toggle("open");
-  overlay.classList.toggle("show");
-});
+/* STORAGE */
 
-overlay.addEventListener("click", closeSidebar);
-
-function scrollToBottom() {
-  chatArea.scrollTop = chatArea.scrollHeight;
+function loadChats() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
 }
 
-function addMessage(role, text) {
+function saveChats() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+    saveStatus.textContent = "● Saved locally";
+    saveStatus.style.color = "#8de0a5";
+  } catch (error) {
+    saveStatus.textContent = "● Storage full";
+    saveStatus.style.color = "#f0a0a0";
+  }
+}
+
+function getActiveChat() {
+  return chats.find(chat => chat.id === activeChatId);
+}
+
+function createChat() {
+  const chat = {
+    id: makeId(),
+    title: "New chat",
+    messages: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+
+  chats.unshift(chat);
+  activeChatId = chat.id;
+  saveChats();
+  renderHistory();
+  renderChat();
+  closeSidebar();
+}
+
+/* TITLES */
+
+function makeTitle(text) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length > 35
+    ? clean.slice(0, 35).trim() + "..."
+    : clean || "New chat";
+}
+
+/* SIDEBAR HISTORY */
+
+function renderHistory() {
+  historyList.innerHTML = "";
+
+  chats.forEach(chat => {
+    const item = document.createElement("div");
+    item.className = "history-item" +
+      (chat.id === activeChatId ? " active" : "");
+
+    const title = document.createElement("span");
+    title.className = "history-title";
+    title.textContent = chat.title;
+
+    const remove = document.createElement("button");
+    remove.className = "delete-chat";
+    remove.textContent = "×";
+    remove.title = "Delete chat";
+
+    remove.addEventListener("click", event => {
+      event.stopPropagation();
+      deleteChat(chat.id);
+    });
+
+    item.appendChild(title);
+    item.appendChild(remove);
+
+    item.addEventListener("click", () => {
+      activeChatId = chat.id;
+      renderHistory();
+      renderChat();
+      closeSidebar();
+    });
+
+    historyList.appendChild(item);
+  });
+}
+
+/* CHAT RENDERING */
+
+function renderChat() {
+  chatInner.innerHTML = "";
+
+  const chat = getActiveChat();
+
+  if (!chat || chat.messages.length === 0) {
+    showWelcome();
+    return;
+  }
+
+  chat.messages.forEach(message => {
+    addMessage(message.role, message.content);
+  });
+
+  highlightAllCode();
+  scrollToBottom();
+}
+
+function showWelcome() {
+  chatInner.innerHTML = `
+    <div class="welcome" id="welcome">
+      <div class="welcome-logo">&lt;/&gt;</div>
+      <h1>What are we <span>building?</span></h1>
+      <p>Your programming companion for coding,
+      debugging and software development.</p>
+
+      <div class="suggestions">
+        <button class="suggestion"
+          data-prompt="Explain Python variables with examples.">
+          <strong>Learn programming</strong>
+          <span>Understand coding concepts</span>
+        </button>
+
+        <button class="suggestion"
+          data-prompt="Help me debug my JavaScript code.">
+          <strong>Debug code</strong>
+          <span>Find and fix programming errors</span>
+        </button>
+
+        <button class="suggestion"
+          data-prompt="Create a simple responsive HTML website.">
+          <strong>Build a website</strong>
+          <span>Start a coding project</span>
+        </button>
+
+        <button class="suggestion"
+          data-prompt="Explain how APIs work with an example.">
+          <strong>Understand APIs</strong>
+          <span>Learn how software connects</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function addMessage(role, content) {
   const message = document.createElement("div");
   message.className = "message " + role;
 
-  const avatar = document.createElement("div");
-  avatar.className = "avatar";
-  avatar.textContent = role === "user" ? "YOU" : "</>";
+  if (role === "user") {
+    const bubble = document.createElement("div");
+    bubble.className = "user-bubble";
+    bubble.textContent = content;
+    message.appendChild(bubble);
+  } else {
+    const answer = document.createElement("div");
+    answer.className = "bot-content";
 
-  const content = document.createElement("div");
-  content.className = "message-content";
+    const html = marked.parse(content || "");
+    answer.innerHTML = DOMPurify.sanitize(html);
 
-  const label = document.createElement("div");
-  label.className = "message-label";
-  label.textContent = role === "user" ? "YOU" : "CODEMIND AI";
-
-  const textElement = document.createElement("div");
-  textElement.className = "message-text";
-  textElement.textContent = text;
-
-  content.appendChild(label);
-  content.appendChild(textElement);
-
-  message.appendChild(avatar);
-  message.appendChild(content);
+    message.appendChild(answer);
+  }
 
   chatInner.appendChild(message);
-  scrollToBottom();
 
-  return textElement;
+  if (role === "bot") {
+    addCopyButtons(message);
+    highlightAllCode();
+  }
+
+  scrollToBottom();
+  return message;
 }
+
+/* CODE HIGHLIGHTING */
+
+function highlightAllCode() {
+  document.querySelectorAll(".bot-content pre code").forEach(block => {
+    if (window.hljs && !block.dataset.highlighted) {
+      hljs.highlightElement(block);
+    }
+  });
+}
+
+function addCopyButtons(message) {
+  message.querySelectorAll("pre").forEach(pre => {
+    const button = document.createElement("button");
+    button.className = "copy-code";
+    button.textContent = "Copy";
+
+    button.addEventListener("click", async () => {
+      const code = pre.querySelector("code");
+      if (!code) return;
+
+      try {
+        await navigator.clipboard.writeText(code.innerText);
+        button.textContent = "Copied!";
+        setTimeout(() => button.textContent = "Copy", 1500);
+      } catch {
+        button.textContent = "Copy failed";
+      }
+    });
+
+    pre.appendChild(button);
+  });
+}
+
+/* TYPING INDICATOR */
 
 function showTyping() {
   const message = document.createElement("div");
@@ -692,9 +909,7 @@ function showTyping() {
   message.id = "typingMessage";
 
   message.innerHTML = `
-    <div class="avatar">&lt;/&gt;</div>
-    <div class="message-content">
-      <div class="message-label">CODEMIND AI</div>
+    <div class="bot-content">
       <div class="typing">Thinking...</div>
     </div>
   `;
@@ -704,24 +919,41 @@ function showTyping() {
 }
 
 function removeTyping() {
-  const typing = document.getElementById("typingMessage");
-  if (typing) typing.remove();
+  document.getElementById("typingMessage")?.remove();
 }
+
+/* SEND MESSAGE */
 
 async function sendMessage(question) {
   if (isSending || !question.trim()) return;
 
+  if (!activeChatId) createChat();
+
+  const chat = getActiveChat();
+  if (!chat) return;
+
   isSending = true;
   sendButton.disabled = true;
 
-  welcome.style.display = "none";
+  const welcome = document.getElementById("welcome");
+  if (welcome) welcome.remove();
 
-  addMessage("user", question);
-
-  conversation.push({
+  const userMessage = {
     role: "user",
     content: question
-  });
+  };
+
+  chat.messages.push(userMessage);
+
+  if (chat.messages.filter(m => m.role === "user").length === 1) {
+    chat.title = makeTitle(question);
+  }
+
+  chat.updatedAt = Date.now();
+
+  saveChats();
+  renderHistory();
+  addMessage("user", question);
 
   input.value = "";
   input.style.height = "auto";
@@ -735,7 +967,7 @@ async function sendMessage(question) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        messages: conversation.slice(-12)
+        messages: chat.messages.slice(-12)
       })
     });
 
@@ -747,33 +979,28 @@ async function sendMessage(question) {
 
     removeTyping();
 
-    const answer = data.answer;
-
-    addMessage("bot", answer);
-
-    conversation.push({
+    chat.messages.push({
       role: "assistant",
-      content: answer
+      content: data.answer
     });
 
-    connection.textContent = "● AI connected";
-    connection.style.color = "#8de0a5";
+    chat.updatedAt = Date.now();
+
+    saveChats();
+    addMessage("bot", data.answer);
+    renderHistory();
 
   } catch (error) {
     removeTyping();
 
     addMessage(
       "bot",
-      "I couldn't connect to the AI service.\n\n" +
-      "Please try again. If this continues, the backend may be unavailable or the request may have been blocked.\n\n" +
-      "Technical detail: " + error.message
+      "I couldn't connect to the AI service. Please try again.\n\nError: " +
+      error.message
     );
 
-    connection.textContent = "● Connection error";
-    connection.style.color = "#f0a0a0";
-
-    // Remove the unanswered user message from conversation history.
-    conversation.pop();
+    // Keep the user message saved so it is not lost.
+    saveChats();
 
   } finally {
     isSending = false;
@@ -782,12 +1009,14 @@ async function sendMessage(question) {
   }
 }
 
-form.addEventListener("submit", (event) => {
+/* FORM */
+
+form.addEventListener("submit", event => {
   event.preventDefault();
   sendMessage(input.value.trim());
 });
 
-input.addEventListener("keydown", (event) => {
+input.addEventListener("keydown", event => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
     form.requestSubmit();
@@ -799,30 +1028,66 @@ input.addEventListener("input", () => {
   input.style.height = Math.min(input.scrollHeight, 180) + "px";
 });
 
-document.querySelectorAll(".suggestion").forEach(button => {
-  button.addEventListener("click", () => {
-    input.value = button.dataset.prompt;
-    sendMessage(input.value);
-  });
+/* SUGGESTIONS */
+
+document.addEventListener("click", event => {
+  const button = event.target.closest(".suggestion");
+  if (!button) return;
+
+  input.value = button.dataset.prompt;
+  sendMessage(input.value.trim());
 });
+
+/* NEW CHAT */
 
 document.getElementById("newChat").addEventListener("click", () => {
   if (isSending) return;
-
-  conversation = [];
-
-  chatInner.innerHTML = "";
-  chatInner.appendChild(welcome);
-  welcome.style.display = "flex";
-
-  input.value = "";
+  createChat();
   input.focus();
-
-  connection.textContent = "● AI connected";
-  connection.style.color = "#8de0a5";
-
-  closeSidebar();
 });
+
+/* DELETE CHAT */
+
+function deleteChat(id) {
+  if (isSending && id === activeChatId) return;
+
+  chats = chats.filter(chat => chat.id !== id);
+
+  if (activeChatId === id) {
+    activeChatId = null;
+  }
+
+  saveChats();
+  renderHistory();
+  renderChat();
+}
+
+/* MOBILE SIDEBAR */
+
+function closeSidebar() {
+  sidebar.classList.remove("open");
+  overlay.classList.remove("show");
+}
+
+document.getElementById("menuButton").addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+  overlay.classList.toggle("show");
+});
+
+overlay.addEventListener("click", closeSidebar);
+
+/* STARTUP */
+
+function scrollToBottom() {
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+if (chats.length > 0) {
+  activeChatId = chats[0].id;
+}
+
+renderHistory();
+renderChat();
 </script>
 
 </body>
