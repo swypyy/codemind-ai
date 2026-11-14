@@ -6,13 +6,9 @@
 <meta name="theme-color" content="#090810">
 <title>CodeMind AI | Swypyy</title>
 
-<!-- Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-<!-- HTML sanitization -->
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 
-<!-- Code highlighting -->
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
@@ -195,6 +191,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 0 23px;
   border-bottom: 1px solid var(--border);
 }
@@ -203,6 +200,8 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 13px;
+  min-width: 0;
+  flex: 1;
 }
 
 .menu-button {
@@ -211,16 +210,26 @@ button { cursor: pointer; }
   border: 0;
   color: var(--text);
   font-size: 21px;
+  flex-shrink: 0;
 }
+
+/* CURRENT CHAT TITLE */
 
 .model-name {
   font-size: 14px;
   font-weight: bold;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: min(55vw, 520px);
+  min-width: 0;
 }
 
 .save-status {
   color: #8de0a5;
   font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* CHAT AREA */
@@ -352,6 +361,7 @@ button { cursor: pointer; }
 }
 
 .bot-content p { margin: 0 0 15px; }
+
 .bot-content h1,
 .bot-content h2,
 .bot-content h3 {
@@ -379,9 +389,7 @@ button { cursor: pointer; }
   background: #151221;
 }
 
-.bot-content a {
-  color: var(--light);
-}
+.bot-content a { color: var(--light); }
 
 .bot-content table {
   border-collapse: collapse;
@@ -543,6 +551,13 @@ textarea::placeholder { color: #777087; }
     padding: 0 13px;
   }
 
+  .model-name {
+    max-width: 48vw;
+    font-size: 13px;
+  }
+
+  .save-status { font-size: 10px; }
+
   .chat-inner { padding: 22px 15px; }
   .welcome { min-height: 60vh; }
   .suggestions { grid-template-columns: 1fr; }
@@ -589,14 +604,15 @@ textarea::placeholder { color: #777087; }
   <header class="topbar">
     <div class="top-left">
       <button class="menu-button" id="menuButton">☰</button>
-      <div class="model-name">CodeMind AI</div>
+      <div class="model-name" id="chatTitle" title="CodeMind AI">
+        CodeMind AI
+      </div>
     </div>
     <div class="save-status" id="saveStatus">● Saved locally</div>
   </header>
 
   <section class="chat-area" id="chatArea">
     <div class="chat-inner" id="chatInner">
-
       <div class="welcome" id="welcome">
         <div class="welcome-logo">&lt;/&gt;</div>
 
@@ -633,7 +649,6 @@ textarea::placeholder { color: #777087; }
           </button>
         </div>
       </div>
-
     </div>
   </section>
 
@@ -679,12 +694,14 @@ const historyList = document.getElementById("historyList");
 const saveStatus = document.getElementById("saveStatus");
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
+const chatTitle = document.getElementById("chatTitle");
 
 /* STATE */
 
+// Each chat can have its own background request.
 let chats = loadChats();
 let activeChatId = null;
-let isSending = false;
+const pendingRequests = new Set();
 
 function makeId() {
   return Date.now().toString(36) +
@@ -696,7 +713,17 @@ function makeId() {
 function loadChats() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
+    const parsed = saved ? JSON.parse(saved) : [];
+
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter(chat =>
+      chat &&
+      typeof chat.id === "string" &&
+      typeof chat.title === "string" &&
+      Array.isArray(chat.messages)
+    );
+
   } catch {
     return [];
   }
@@ -704,9 +731,14 @@ function loadChats() {
 
 function saveChats() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(chats)
+    );
+
     saveStatus.textContent = "● Saved locally";
     saveStatus.style.color = "#8de0a5";
+
   } catch (error) {
     saveStatus.textContent = "● Storage full";
     saveStatus.style.color = "#f0a0a0";
@@ -716,6 +748,26 @@ function saveChats() {
 function getActiveChat() {
   return chats.find(chat => chat.id === activeChatId);
 }
+
+/* TOP BAR TITLE */
+
+function updateChatTitle() {
+  const chat = getActiveChat();
+
+  const title = chat ? chat.title : "CodeMind AI";
+
+  chatTitle.textContent = title;
+  chatTitle.title = title;
+}
+
+/* COMPOSER STATE */
+
+function updateComposerState() {
+  sendButton.disabled =
+    !!activeChatId && pendingRequests.has(activeChatId);
+}
+
+/* CREATE CHAT */
 
 function createChat() {
   const chat = {
@@ -728,16 +780,20 @@ function createChat() {
 
   chats.unshift(chat);
   activeChatId = chat.id;
+
   saveChats();
   renderHistory();
   renderChat();
   closeSidebar();
+
+  return chat;
 }
 
 /* TITLES */
 
 function makeTitle(text) {
   const clean = text.replace(/\s+/g, " ").trim();
+
   return clean.length > 35
     ? clean.slice(0, 35).trim() + "..."
     : clean || "New chat";
@@ -750,6 +806,7 @@ function renderHistory() {
 
   chats.forEach(chat => {
     const item = document.createElement("div");
+
     item.className = "history-item" +
       (chat.id === activeChatId ? " active" : "");
 
@@ -761,6 +818,7 @@ function renderHistory() {
     remove.className = "delete-chat";
     remove.textContent = "×";
     remove.title = "Delete chat";
+    remove.setAttribute("aria-label", "Delete " + chat.title);
 
     remove.addEventListener("click", event => {
       event.stopPropagation();
@@ -772,6 +830,7 @@ function renderHistory() {
 
     item.addEventListener("click", () => {
       activeChatId = chat.id;
+
       renderHistory();
       renderChat();
       closeSidebar();
@@ -779,6 +838,9 @@ function renderHistory() {
 
     historyList.appendChild(item);
   });
+
+  updateChatTitle();
+  updateComposerState();
 }
 
 /* CHAT RENDERING */
@@ -790,14 +852,24 @@ function renderChat() {
 
   if (!chat || chat.messages.length === 0) {
     showWelcome();
-    return;
+  } else {
+    chat.messages.forEach(message => {
+      addMessage(
+        message.role === "assistant" ? "bot" : message.role,
+        message.content
+      );
+    });
   }
 
-  chat.messages.forEach(message => {
-    addMessage(message.role, message.content);
-  });
+  // Display the correct typing indicator
+  // for the currently selected chat.
+  if (chat && pendingRequests.has(chat.id)) {
+    showTyping(chat.id);
+  }
 
   highlightAllCode();
+  updateChatTitle();
+  updateComposerState();
   scrollToBottom();
 }
 
@@ -838,6 +910,8 @@ function showWelcome() {
   `;
 }
 
+/* MESSAGE RENDERING */
+
 function addMessage(role, content) {
   const message = document.createElement("div");
   message.className = "message " + role;
@@ -846,7 +920,9 @@ function addMessage(role, content) {
     const bubble = document.createElement("div");
     bubble.className = "user-bubble";
     bubble.textContent = content;
+
     message.appendChild(bubble);
+
   } else {
     const answer = document.createElement("div");
     answer.className = "bot-content";
@@ -865,6 +941,7 @@ function addMessage(role, content) {
   }
 
   scrollToBottom();
+
   return message;
 }
 
@@ -890,8 +967,13 @@ function addCopyButtons(message) {
 
       try {
         await navigator.clipboard.writeText(code.innerText);
+
         button.textContent = "Copied!";
-        setTimeout(() => button.textContent = "Copy", 1500);
+
+        setTimeout(() => {
+          button.textContent = "Copy";
+        }, 1500);
+
       } catch {
         button.textContent = "Copy failed";
       }
@@ -903,47 +985,67 @@ function addCopyButtons(message) {
 
 /* TYPING INDICATOR */
 
-function showTyping() {
+function showTyping(chatId) {
+  if (chatId !== activeChatId) return;
+
+  const typingId = "typing-" + chatId;
+
+  if (document.getElementById(typingId)) return;
+
   const message = document.createElement("div");
   message.className = "message bot";
-  message.id = "typingMessage";
+  message.id = typingId;
 
-  message.innerHTML = `
-    <div class="bot-content">
-      <div class="typing">Thinking...</div>
-    </div>
-  `;
+  const content = document.createElement("div");
+  content.className = "bot-content";
+
+  const text = document.createElement("div");
+  text.className = "typing";
+  text.textContent = "Thinking...";
+
+  content.appendChild(text);
+  message.appendChild(content);
 
   chatInner.appendChild(message);
   scrollToBottom();
 }
 
-function removeTyping() {
-  document.getElementById("typingMessage")?.remove();
+function removeTyping(chatId) {
+  document.getElementById("typing-" + chatId)?.remove();
 }
 
 /* SEND MESSAGE */
 
 async function sendMessage(question) {
-  if (isSending || !question.trim()) return;
+  question = question.trim();
 
-  if (!activeChatId) createChat();
+  if (!question) return;
 
-  const chat = getActiveChat();
+  if (!activeChatId) {
+    createChat();
+  }
+
+  // Capture the chat ID before starting the request.
+  const requestChatId = activeChatId;
+
+  // Prevent duplicate simultaneous requests in one chat.
+  if (pendingRequests.has(requestChatId)) return;
+
+  const chat = chats.find(
+    c => c.id === requestChatId
+  );
+
   if (!chat) return;
 
-  isSending = true;
-  sendButton.disabled = true;
+  // Track this request independently.
+  pendingRequests.add(requestChatId);
+  updateComposerState();
 
-  const welcome = document.getElementById("welcome");
-  if (welcome) welcome.remove();
-
-  const userMessage = {
+  // Save the user message in its original chat.
+  chat.messages.push({
     role: "user",
     content: question
-  };
-
-  chat.messages.push(userMessage);
+  });
 
   if (chat.messages.filter(m => m.role === "user").length === 1) {
     chat.title = makeTitle(question);
@@ -953,12 +1055,17 @@ async function sendMessage(question) {
 
   saveChats();
   renderHistory();
+
+  // Show the message only in the original active chat.
   addMessage("user", question);
 
   input.value = "";
   input.style.height = "auto";
 
-  showTyping();
+  showTyping(requestChatId);
+
+  // Snapshot the conversation for this request.
+  const requestMessages = chat.messages.slice(-12);
 
   try {
     const response = await fetch(API_URL + "/chat", {
@@ -967,45 +1074,68 @@ async function sendMessage(question) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        messages: chat.messages.slice(-12)
+        messages: requestMessages
       })
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.success || !data.answer) {
-      throw new Error(data.error || "The AI could not respond.");
+      throw new Error(
+        data.error || "The AI could not respond."
+      );
     }
 
-    removeTyping();
+    // Find the original chat, not the currently active chat.
+    const originalChat = chats.find(
+      c => c.id === requestChatId
+    );
 
-    chat.messages.push({
+    // If the chat was deleted, discard the response.
+    if (!originalChat) return;
+
+    originalChat.messages.push({
       role: "assistant",
       content: data.answer
     });
 
-    chat.updatedAt = Date.now();
+    originalChat.updatedAt = Date.now();
 
     saveChats();
-    addMessage("bot", data.answer);
     renderHistory();
 
   } catch (error) {
-    removeTyping();
-
-    addMessage(
-      "bot",
-      "I couldn't connect to the AI service. Please try again.\n\nError: " +
-      error.message
+    const originalChat = chats.find(
+      c => c.id === requestChatId
     );
 
-    // Keep the user message saved so it is not lost.
-    saveChats();
+    if (originalChat) {
+      originalChat.messages.push({
+        role: "assistant",
+        content:
+          "I couldn't connect to the AI service. Please try again.\n\nError: " +
+          error.message
+      });
+
+      originalChat.updatedAt = Date.now();
+
+      saveChats();
+      renderHistory();
+    }
 
   } finally {
-    isSending = false;
-    sendButton.disabled = false;
-    input.focus();
+    // Finish only the request belonging to this chat.
+    pendingRequests.delete(requestChatId);
+
+    removeTyping(requestChatId);
+
+    // Never insert an old response into a different chat.
+    if (activeChatId === requestChatId) {
+      renderChat();
+      input.focus();
+    } else {
+      updateComposerState();
+    }
   }
 }
 
@@ -1013,7 +1143,7 @@ async function sendMessage(question) {
 
 form.addEventListener("submit", event => {
   event.preventDefault();
-  sendMessage(input.value.trim());
+  sendMessage(input.value);
 });
 
 input.addEventListener("keydown", event => {
@@ -1025,23 +1155,27 @@ input.addEventListener("keydown", event => {
 
 input.addEventListener("input", () => {
   input.style.height = "auto";
-  input.style.height = Math.min(input.scrollHeight, 180) + "px";
+
+  input.style.height =
+    Math.min(input.scrollHeight, 180) + "px";
 });
 
 /* SUGGESTIONS */
 
 document.addEventListener("click", event => {
   const button = event.target.closest(".suggestion");
+
   if (!button) return;
 
   input.value = button.dataset.prompt;
-  sendMessage(input.value.trim());
+  sendMessage(input.value);
 });
 
 /* NEW CHAT */
 
 document.getElementById("newChat").addEventListener("click", () => {
-  if (isSending) return;
+  // Previous requests are NOT cancelled.
+  // A fresh chat opens immediately.
   createChat();
   input.focus();
 });
@@ -1049,8 +1183,8 @@ document.getElementById("newChat").addEventListener("click", () => {
 /* DELETE CHAT */
 
 function deleteChat(id) {
-  if (isSending && id === activeChatId) return;
-
+  // Do not cancel the request.
+  // If the chat is deleted, its eventual response is discarded.
   chats = chats.filter(chat => chat.id !== id);
 
   if (activeChatId === id) {
@@ -1088,6 +1222,8 @@ if (chats.length > 0) {
 
 renderHistory();
 renderChat();
+updateComposerState();
+
 </script>
 
 </body>
