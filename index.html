@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090914">
+<title>CodeMind AI | Swypyy</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #090914;
+  color: #f4f2ff;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 18px;
+  border-bottom: 1px solid #292943;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  background: #21183b;
+  color: #b69aff;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.brand {
+  font-size: 19px;
+  font-weight: bold;
+}
+
+.brand small {
+  display: block;
+  font-size: 11px;
+  color: #aaa7c4;
+  font-weight: normal;
+}
+
+main {
+  max-width: 760px;
+  margin: 50px auto;
+  padding: 16px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.hero h1 {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.hero h1 span {
+  color: #b69aff;
+}
+
+.hero p {
+  color: #aaa7c4;
+  line-height: 1.6;
+}
+
+.chat {
+  background: #111122;
+  border: 1px solid #292943;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 16px;
+  border-bottom: 1px solid #292943;
+}
+
+.status {
+  color: #8de0a5;
+  font-size: 12px;
+}
+
+.messages {
+  padding: 18px;
+  min-height: 280px;
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.message {
+  padding: 13px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bot {
+  background: #1c1c32;
+}
+
+.user {
+  background: #35265e;
+  margin-left: auto;
+  max-width: 85%;
+}
+
+.label {
+  display: block;
+  color: #b69aff;
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 7px;
+}
+
+.composer {
+  display: flex;
+  gap: 9px;
+  padding: 13px;
+  border-top: 1px solid #292943;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  background: #090914;
+  color: white;
+  border: 1px solid #343450;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 15px;
+  outline: none;
+}
+
+button {
+  background: #8057dc;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .6;
+}
+
+.note {
+  text-align: center;
+  color: #aaa7c4;
+  font-size: 12px;
+  margin-top: 14px;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.feature {
+  background: #111122;
+  border: 1px solid #292943;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+.feature p {
+  color: #aaa7c4;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #77748e;
+  font-size: 12px;
+}
+
+@media(max-width:600px) {
+  main {
+    margin-top: 25px;
+  }
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .composer {
+    padding: 9px;
+  }
+
+  button {
+    padding: 0 13px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">&lt;/&gt;</div>
+  <div class="brand">
+    CodeMind AI
+    <small>POWERED BY SWYPYY</small>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <h1>Build. Debug. <span>Learn.</span></h1>
+  <p>
+    Your programming companion.
+    Focused on coding, debugging
+    and software development.
+  </p>
+</section>
+
+<section class="chat">
+
+  <div class="chat-header">
+    <strong>CodeMind Assistant</strong>
+    <div class="status">
+      ● Preview mode · AI not connected
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+
+    <div class="message bot">
+      <span class="label">CODEMIND AI</span>
+      Hello! I'm CodeMind AI by Swypyy.
+
+      I'm designed to specialize in programming,
+      coding and software development.
+
+      My AI engine is not connected yet.
+      This is my first website version!
+    </div>
+
+  </div>
+
+  <form class="composer" id="chatForm">
+
+    <input
+      id="userInput"
+      type="text"
+      placeholder="Ask a coding question..."
+      autocomplete="off"
+      required
+    >
+
+    <button type="submit" id="sendButton">
+      Send
+    </button>
+
+  </form>
+
+</section>
+
+<p class="note">
+  Preview version. Messages are not sent
+  to an AI service or stored.
+</p>
+
+<section class="features">
+
+  <div class="feature">
+    <h3>⌘ Coding</h3>
+    <p>Support for Python, JavaScript,
+    Java, C++, and more.</p>
+  </div>
+
+  <div class="feature">
+    <h3>⌕ Debugging</h3>
+    <p>Understand programming errors
+    and find solutions.</p>
+  </div>
+
+  <div class="feature">
+    <h3>▤ Private Learning</h3>
+    <p>Your own coding knowledge,
+    examples and corrections.</p>
+  </div>
+
+</section>
+
+</main>
+
+<footer>
+  © <span id="year"></span> Swypyy.
+  CodeMind AI.
+</footer>
+
+<script>
+document.getElementById("year").textContent =
+  new Date().getFullYear();
+
+const form = document.getElementById("chatForm");
+const input = document.getElementById("userInput");
+const messages = document.getElementById("messages");
+
+form.addEventListener("submit", function(event) {
+
+  event.preventDefault();
+
+  const question = input.value.trim();
+
+  if (!question) return;
+
+  const userMessage = document.createElement("div");
+  userMessage.className = "message user";
+  userMessage.textContent = question;
+
+  messages.appendChild(userMessage);
+
+  const botMessage = document.createElement("div");
+  botMessage.className = "message bot";
+
+  const label = document.createElement("span");
+  label.className = "label";
+  label.textContent = "CODEMIND AI";
+
+  botMessage.appendChild(label);
+
+  botMessage.appendChild(
+    document.createTextNode(
+      "Your website is working! My AI brain will be connected in a later development step. Your message has not been sent anywhere."
+    )
+  );
+
+  messages.appendChild(botMessage);
+
+  input.value = "";
+
+  messages.scrollTop = messages.scrollHeight;
+
+});
+</script>
+
+</body>
+  </html>
