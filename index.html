@@ -537,7 +537,6 @@ textarea::placeholder { color:#777087; }
 </div>
 
 <script>
-  
 /* CONFIGURATION */
 const API_URL = "https://codemind-ai-api.swypyy.workers.dev";
 const STORAGE_KEY = "codemind_saved_chats_v1";
@@ -906,6 +905,81 @@ function buildRequestMessages(messages) {
     }));
 }
 
+/* GEMINI STREAM READER */
+async function readGeminiStream(response, onText) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+
+  let buffer = "";
+  let fullAnswer = "";
+
+  function processEvent(event) {
+    const dataLines = event
+      .split(/\r?\n/)
+      .filter(line => line.startsWith("data:"))
+      .map(line => line.slice(5).trim());
+
+    if (!dataLines.length) return;
+
+    const rawData = dataLines.join("\n");
+
+    if (!rawData || rawData === "[DONE]") return;
+
+    let data;
+
+    try {
+      data = JSON.parse(rawData);
+    } catch {
+      return;
+    }
+
+    if (data.error) {
+      throw new Error(
+        data.error.message || "Gemini streaming error."
+      );
+    }
+
+    const parts =
+      data?.candidates?.[0]?.content?.parts || [];
+
+    for (const part of parts) {
+      if (typeof part.text === "string") {
+        fullAnswer += part.text;
+        onText(fullAnswer);
+      }
+    }
+  }
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop() || "";
+
+      for (const event of events) {
+        processEvent(event);
+      }
+    }
+
+    buffer += decoder.decode();
+
+    if (buffer.trim()) {
+      processEvent(buffer);
+    }
+
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  }
+
+  return fullAnswer;
+}
+
 /* SEND MESSAGE */
 async function sendMessage(question) {
   question = question.trim();
@@ -924,10 +998,8 @@ async function sendMessage(question) {
     createChat();
   }
 
-  // Remember the original chat before starting the request.
   const requestChatId = activeChatId;
 
-  // Only one request per chat at a time.
   if (pendingRequests.has(requestChatId)) return;
 
   const chat = chats.find(c => c.id === requestChatId);
@@ -936,7 +1008,6 @@ async function sendMessage(question) {
   pendingRequests.add(requestChatId);
   updateComposerState();
 
-  // Save the user's message to its original chat.
   chat.messages.push({
     role: "user",
     content: question
@@ -957,8 +1028,9 @@ async function sendMessage(question) {
 
   showTyping(requestChatId);
 
-  // Exclude invalid and oversized old messages before sending.
   const requestMessages = buildRequestMessages(chat.messages);
+
+  let streamContent = null;
 
   try {
     if (
@@ -978,25 +1050,54 @@ async function sendMessage(question) {
       })
     });
 
-    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
 
-    if (!response.ok || !data.success || !data.answer) {
       throw new Error(
-        data.error || "The AI could not respond."
+        errorData.error || "The AI service returned an error."
       );
     }
 
-    // Find the original chat, not the currently selected chat.
+    if (!response.body) {
+      throw new Error("Streaming is not supported by this response.");
+    }
+
+    removeTyping(requestChatId);
+
+    // Create a live answer bubble in the selected chat.
+    if (activeChatId === requestChatId) {
+      const streamMessage = document.createElement("div");
+      streamMessage.className = "message bot";
+
+      streamContent = document.createElement("div");
+      streamContent.className = "bot-content";
+      streamContent.style.whiteSpace = "pre-wrap";
+
+      streamMessage.appendChild(streamContent);
+      chatInner.appendChild(streamMessage);
+    }
+
+    // Display text as it arrives.
+    const answer = await readGeminiStream(response, text => {
+      if (streamContent && activeChatId === requestChatId) {
+        streamContent.textContent = text;
+        scrollToBottom();
+      }
+    });
+
+    if (!answer.trim()) {
+      throw new Error("Gemini returned an empty response.");
+    }
+
     const originalChat = chats.find(
       c => c.id === requestChatId
     );
 
-    // If the chat was deleted, discard its response.
     if (!originalChat) return;
 
     originalChat.messages.push({
       role: "assistant",
-      content: data.answer
+      content: answer
     });
 
     originalChat.updatedAt = Date.now();
@@ -1015,7 +1116,7 @@ async function sendMessage(question) {
       originalChat.messages.push({
         role: "assistant",
         content:
-          "I couldn't connect to the AI service. Please try again.\n\nError: " +
+          "I couldn't complete the request.\n\nError: " +
           error.message
       });
 
@@ -1029,7 +1130,6 @@ async function sendMessage(question) {
     pendingRequests.delete(requestChatId);
     removeTyping(requestChatId);
 
-    // Only update the screen if this chat is still selected.
     if (activeChatId === requestChatId) {
       renderChat();
       input.focus();
@@ -1069,15 +1169,12 @@ document.addEventListener("click", event => {
 
 /* NEW CHAT */
 document.getElementById("newChat").addEventListener("click", () => {
-  // Existing requests continue in their original chats.
   createChat();
   input.focus();
 });
 
 /* DELETE CHAT */
 function deleteChat(id) {
-  // Do not cancel the request.
-  // Its response is discarded if this chat no longer exists.
   chats = chats.filter(chat => chat.id !== id);
 
   if (activeChatId === id) {
@@ -1117,7 +1214,6 @@ if (chats.length > 0) {
 renderHistory();
 renderChat();
 updateComposerState();
-
 </script>
 </body>
 </html>
